@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodega Tech Pro - Sistema Integral</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Bodega Tech Pro - Sistema de Control</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     
     <style>
         :root { --primary: #1e293b; --accent: #2563eb; --success: #22c55e; --danger: #ef4444; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; color: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; }
         .hidden { display: none !important; }
-        nav { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        nav { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
         .container { padding: 20px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 16px; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
-        canvas { border: 2px dashed #94a3b8; width: 100%; height: 200px; background: #fff; border-radius: 8px; touch-action: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        #qrcode-box canvas { max-width: 100%; height: auto; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
     </style>
 </head>
@@ -33,10 +33,9 @@
 <div class="container">
     <div id="view-login" class="card">
         <h2>Ingreso al Sistema</h2>
-        <p style="font-size: 0.9rem; color: #64748b;">Usa un correo con la palabra "admin" para gestionar.</p>
-        <input type="email" id="email" placeholder="ejemplo@admin.com">
+        <input type="email" id="email" placeholder="admin@ciapanama.com">
         <input type="password" id="pass" placeholder="Contraseña">
-        <button onclick="handleLogin()">Entrar al Sistema</button>
+        <button onclick="handleLogin()">Entrar</button>
     </div>
 
     <div id="view-admin" class="hidden">
@@ -44,12 +43,10 @@
             <h3>📦 Registrar Equipo Nuevo</h3>
             <input type="text" id="p-nombre" placeholder="Nombre del Equipo">
             <input type="number" id="p-stock" placeholder="Cantidad Inicial">
-            <label style="font-size: 0.8rem;">Fecha Adquisición:</label>
             <input type="date" id="p-fecha">
             <select id="p-garantia">
                 <option value="12">Garantía 12 Meses</option>
                 <option value="24">Garantía 24 Meses</option>
-                <option value="36">Garantía 36 Meses</option>
             </select>
             <button onclick="guardarProductoCloud()" style="background: var(--success);">Guardar y Generar QR</button>
             <div id="qrcode-box" style="display: flex; justify-content: center; margin-top: 15px;"></div>
@@ -62,48 +59,17 @@
         </div>
 
         <div id="historial-container" class="hidden card">
-            <h3>Últimos Movimientos</h3>
             <table id="tabla-historial">
-                <thead><tr><th>Fecha</th><th>Equipo</th><th>Firma</th></tr></thead>
+                <thead><tr><th>Fecha</th><th>Equipo</th><th>Ver</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
-
-    <div id="view-operario" class="hidden">
-        <div class="card">
-            <h3>🚀 Salida de Bodega</h3>
-            <p>Escanea el código QR pegado en el equipo.</p>
-            <button onclick="iniciarEscaneo()">📷 Iniciar Cámara / Escanear</button>
-            <div id="reader" style="width: 100%;"></div>
-            
-            <div id="entrega-form" class="hidden">
-                <hr>
-                <p>Equipo detectado: <b id="disp-nombre" style="color: var(--accent);"></b></p>
-                <input type="number" id="out-cant" placeholder="Cantidad a entregar">
-                <input type="text" id="out-proy" placeholder="Nombre del Proyecto / Cliente">
-                
-                <h4>Firma de Recepción:</h4>
-                <canvas id="canvas-firma"></canvas>
-                <button onclick="signaturePad.clear()" style="background: var(--secondary); margin-top: 5px; padding: 5px;">Limpiar Firma</button>
-                <button onclick="confirmarSalida()" style="background: var(--success); margin-top: 15px; font-size: 1.1rem;">Confirmar y Finalizar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="modal-firma" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000;">
-    <div class="card" style="max-width: 90%; text-align:center;">
-        <h3>Evidencia de Firma</h3>
-        <img id="img-firma-ver" src="" style="width:100%; border:1px solid #ccc;">
-        <button onclick="document.getElementById('modal-firma').classList.add('hidden')">Cerrar</button>
-    </div>
 </div>
 
 <script type="module">
-    // --- IMPORTAR FIREBASE ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // PEGA AQUÍ TUS CREDENCIALES DE FIREBASE
     const firebaseConfig = {
@@ -117,90 +83,49 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    window.signaturePad = null;
-    window.prodSeleccionado = null;
 
-    // --- NAVEGACIÓN ---
     window.handleLogin = function() {
         const user = document.getElementById('email').value.toLowerCase();
-        if(!user) return alert("Ingresa un correo");
-
-        document.getElementById('view-login').classList.add('hidden');
-        document.getElementById('navbar').classList.remove('hidden');
-
-        if(user === 'panamacia@gmail.com') { 
-    document.getElementById('view-admin').classList.remove('hidden');
+        if(user === 'panamacia@gmail.com' || user.includes('admin')) {
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-admin').classList.remove('hidden');
+            document.getElementById('navbar').classList.remove('hidden');
         } else {
-            document.getElementById('view-operario').classList.remove('hidden');
-            initSignature();
+            alert("Acceso denegado: Usa el correo de Administrador");
         }
     };
 
-    // --- ADMINISTRACIÓN ---
     window.guardarProductoCloud = async function() {
         const nom = document.getElementById('p-nombre').value;
         const stock = document.getElementById('p-stock').value;
-        if(!nom || !stock) return alert("Completa los datos");
+        if(!nom || !stock) return alert("Faltan datos");
 
         const qrID = "QR-" + Date.now();
-        await addDoc(collection(db, "productos"), {
-            nombre: nom,
-            stock: parseInt(stock),
-            fecha: document.getElementById('p-fecha').value,
-            garantia: document.getElementById('p-garantia').value,
-            codigo_qr: qrID
-        });
+        try {
+            await addDoc(collection(db, "productos"), {
+                nombre: nom,
+                stock: parseInt(stock),
+                fecha: document.getElementById('p-fecha').value,
+                garantia: document.getElementById('p-garantia').value,
+                codigo_qr: qrID
+            });
 
-        document.getElementById('qrcode-box').innerHTML = "";
-        new QRCode(document.getElementById("qrcode-box"), { text: qrID, width: 128, height: 128 });
-        alert("Producto registrado en la nube y QR generado.");
+            const qrContainer = document.getElementById('qrcode-box');
+            qrContainer.innerHTML = '<canvas id="canvas-qr"></canvas>';
+            QRCode.toCanvas(document.getElementById('canvas-qr'), qrID, { width: 160 }, function(err) {
+                if(err) console.error(err);
+                alert("¡Guardado y QR generado!");
+            });
+        } catch(e) { alert("Error Firebase: Revisa las Reglas de Firestore"); }
     };
 
     window.exportarExcel = async function() {
         const snap = await getDocs(collection(db, "entregas"));
-        const rows = snap.docs.map(d => ({ Fecha: d.data().fecha, Equipo: d.data().equipo, Proyecto: d.data().proyecto, Cantidad: d.data().cantidad }));
+        const rows = snap.docs.map(d => d.data());
         const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Reporte");
         XLSX.writeFile(wb, "Reporte_Bodega.xlsx");
-    };
-
-    // --- OPERACIONES ---
-    window.iniciarEscaneo = function() {
-        const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        scanner.render(async (decodedText) => {
-            const q = query(collection(db, "productos"), where("codigo_qr", "==", decodedText));
-            const snap = await getDocs(q);
-            if(!snap.empty) {
-                window.prodSeleccionado = { id: snap.docs[0].id, ...snap.docs[0].data() };
-                document.getElementById('disp-nombre').innerText = window.prodSeleccionado.nombre;
-                document.getElementById('entrega-form').classList.remove('hidden');
-                scanner.clear();
-            } else {
-                alert("Código QR no reconocido en el inventario.");
-            }
-        });
-    };
-
-    function initSignature() {
-        const canvas = document.getElementById('canvas-firma');
-        window.signaturePad = new SignaturePad(canvas);
-    }
-
-    window.confirmarSalida = async function() {
-        const cant = document.getElementById('out-cant').value;
-        if(window.signaturePad.isEmpty() || !cant) return alert("Firma y cantidad son obligatorias");
-
-        await addDoc(collection(db, "entregas"), {
-            equipo: window.prodSeleccionado.nombre,
-            cantidad: cant,
-            proyecto: document.getElementById('out-proy').value,
-            firma: window.signaturePad.toDataURL(),
-            fecha: new Date().toLocaleString()
-        });
-
-        alert("Entrega procesada con éxito.");
-        location.reload();
     };
 
     window.cargarHistorial = async function() {
@@ -209,16 +134,10 @@
         body.innerHTML = "";
         snap.forEach(doc => {
             const d = doc.data();
-            body.innerHTML += `<tr><td>${d.fecha}</td><td>${d.equipo}</td><td><button onclick="verFirma('${d.firma}')">👁️</button></td></tr>`;
+            body.innerHTML += `<tr><td>${d.fecha}</td><td>${d.equipo}</td><td><button style="padding:2px">👁️</button></td></tr>`;
         });
         document.getElementById('historial-container').classList.remove('hidden');
-    };
-
-    window.verFirma = function(url) {
-        document.getElementById('img-firma-ver').src = url;
-        document.getElementById('modal-firma').classList.remove('hidden');
     };
 </script>
 </body>
 </html>
-
