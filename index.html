@@ -3,123 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodega Tech Pro</title>
+    <title>Bodega Tech Pro - Sistema Integral</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     
     <style>
-        :root { --p: #1e293b; --a: #2563eb; --s: #22c55e; }
-        body { font-family: sans-serif; margin: 0; background: #f1f5f9; }
+        :root { --primary: #1e293b; --accent: #2563eb; --success: #22c55e; --danger: #ef4444; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; }
         .hidden { display: none !important; }
-        nav { background: var(--p); color: white; padding: 15px; display: flex; justify-content: space-between; }
-        .container { padding: 15px; max-width: 500px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, button, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: var(--a); color: white; border: none; font-weight: bold; cursor: pointer; }
-        canvas { border: 1px dashed #ccc; width: 100%; height: 180px; background: #fff; }
+        nav { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        canvas { border: 1px dashed #94a3b8; width: 100%; height: 200px; background: #fff; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
     </style>
 </head>
 <body>
 
 <nav id="navbar" class="hidden">
-    <span>📦 Bodega Tech</span>
-    <button onclick="location.reload()" style="width:auto; background:red; padding:5px 10px;">Salir</button>
+    <strong>BODEGA TECH 📦</strong>
+    <button onclick="location.reload()" style="width: auto; background: var(--danger); padding: 5px 10px;">Salir</button>
 </nav>
 
 <div class="container">
     <div id="view-login" class="card">
-        <h2>Ingreso Bodega</h2>
+        <h2>Ingreso al Sistema</h2>
         <input type="email" id="email" placeholder="admin@tech.com">
         <input type="password" id="pass" placeholder="Contraseña">
-        <button onclick="login()">Entrar</button>
+        <button onclick="handleLogin()">Entrar</button>
     </div>
 
     <div id="view-admin" class="hidden">
         <div class="card">
-            <h3>Registrar Equipo</h3>
-            <input type="text" id="p-nom" placeholder="Nombre Equipo">
+            <h3>Registrar Producto</h3>
+            <input type="text" id="p-nombre" placeholder="Nombre del Equipo">
             <input type="number" id="p-stock" placeholder="Stock Inicial">
             <input type="date" id="p-fecha">
-            <select id="p-gar">
-                <option value="12">12 Meses</option>
-                <option value="24">24 Meses</option>
+            <select id="p-garantia">
+                <option value="12">Garantía 12 Meses</option>
+                <option value="24">Garantía 24 Meses</option>
             </select>
-            <button onclick="guardarProducto()" style="background:var(--s)">Guardar y Generar QR</button>
-            <div id="qrcode" style="display:flex; justify-content:center; margin-top:10px;"></div>
+            <button onclick="guardarProducto()" style="background: var(--success);">Guardar y Generar QR</button>
+            <div id="qrcode" style="display: flex; justify-content: center; margin-top: 15px;"></div>
+        </div>
+        <div class="card">
+            <h3>Reportes</h3>
+            <button onclick="exportarExcel()">📥 Descargar Excel Semanal</button>
+            <button onclick="verHistorial()" style="background: var(--primary); margin-top: 10px;">📋 Ver Historial de Firmas</button>
+        </div>
+        <div id="historial-container" class="hidden card">
+            <table id="tabla-historial">
+                <thead><tr><th>Fecha</th><th>Equipo</th><th>Firma</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
-    <div id="view-op" class="hidden">
+    <div id="view-operario" class="hidden">
         <div class="card">
-            <h3>Salida de Equipo</h3>
-            <button onclick="escanear()">📷 Escanear QR</button>
+            <h3>Salida de Bodega</h3>
+            <button onclick="iniciarEscaneo()">📷 Escanear QR de Equipo</button>
             <div id="reader"></div>
-            <div id="form-firma" class="hidden">
-                <p>Equipo: <b id="out-nom"></b></p>
-                <input type="number" id="out-cant" placeholder="Cantidad">
-                <canvas id="canvas"></canvas>
-                <button onclick="firmar()" style="background:var(--s)">Confirmar Entrega</button>
+            <div id="entrega-form" class="hidden">
+                <hr>
+                <p>Equipo: <b id="disp-nombre"></b></p>
+                <input type="number" id="out-cant" placeholder="Cantidad a entregar">
+                <input type="text" id="out-proy" placeholder="Nombre del Proyecto">
+                <h4>Firma del Receptor:</h4>
+                <canvas id="canvas-firma"></canvas>
+                <button onclick="confirmarSalida()" style="background: var(--success); margin-top: 10px;">Confirmar y Firmar</button>
             </div>
         </div>
     </div>
 </div>
 
 <script type="module">
-    // --- PEGA TUS LLAVES DE FIREBASE AQUÍ ---
+    // --- CONFIGURACIÓN FIREBASE ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
     const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_PROYECTO.firebaseapp.com",
-      projectId: "TU_PROYECTO",
-      storageBucket: "TU_PROYECTO.appspot.com",
-      messagingSenderId: "TU_ID",
-      appId: "TU_APP_ID"
+        apiKey: "TU_API_KEY",
+        authDomain: "TU_PROYECTO.firebaseapp.com",
+        projectId: "TU_PROYECTO",
+        storageBucket: "TU_PROYECTO.appspot.com",
+        messagingSenderId: "TU_ID",
+        appId: "TU_APP_ID"
     };
 
-    // Inicializar Firebase (Simulado para el ejemplo local)
-    // En tu versión real, descomenta las líneas de importación de Firebase
-    
-    window.login = function() {
-        const u = document.getElementById('email').value;
-        if(u.includes('admin')) { show('view-admin'); } 
-        else { show('view-op'); initFirma(); }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let signaturePad;
+
+    // --- LÓGICA DE NAVEGACIÓN ---
+    window.handleLogin = function() {
+        const user = document.getElementById('email').value;
+        document.getElementById('view-login').classList.add('hidden');
         document.getElementById('navbar').classList.remove('hidden');
-    }
+        
+        if(user.includes('admin')) {
+            document.getElementById('view-admin').classList.remove('hidden');
+        } else {
+            document.getElementById('view-operario').classList.remove('hidden');
+            initSignature();
+        }
+    };
 
-    function show(id) {
-        ['view-login', 'view-admin', 'view-op'].forEach(v => document.getElementById(v).classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-    }
-
-    window.guardarProducto = function() {
-        const id = "ID-" + Date.now();
-        const nom = document.getElementById('p-nom').value;
-        // Lógica de guardado en Firebase aquí
+    // --- FUNCIONES ADMIN ---
+    window.guardarProducto = async function() {
+        const prod = {
+            nombre: document.getElementById('p-nombre').value,
+            stock: parseInt(document.getElementById('p-stock').value),
+            fecha: document.getElementById('p-fecha').value,
+            garantia: document.getElementById('p-garantia').value,
+            codigo_qr: "QR-" + Date.now()
+        };
+        await addDoc(collection(db, "productos"), prod);
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: id, width: 128, height: 128 });
-        alert("Guardado: " + nom);
-    }
+        new QRCode(document.getElementById("qrcode"), { text: prod.codigo_qr, width: 128, height: 128 });
+        alert("Producto registrado en la nube.");
+    };
 
-    window.escanear = function() {
+    window.exportarExcel = async function() {
+        const snap = await getDocs(collection(db, "entregas"));
+        const data = snap.docs.map(d => ({ Fecha: d.data().fecha, Equipo: d.data().equipo, Proyecto: d.data().proyecto }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Entregas");
+        XLSX.writeFile(wb, "Reporte_Bodega.xlsx");
+    };
+
+    // --- FUNCIONES OPERARIO ---
+    window.iniciarEscaneo = function() {
         const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        scanner.render((text) => {
-            document.getElementById('form-firma').classList.remove('hidden');
-            document.getElementById('out-nom').innerText = "Equipo Detectado";
-            scanner.clear();
+        scanner.render(async (decodedText) => {
+            const q = query(collection(db, "productos"), where("codigo_qr", "==", decodedText));
+            const snap = await getDocs(q);
+            if(!snap.empty) {
+                window.prodActual = { id: snap.docs[0].id, ...snap.docs[0].data() };
+                document.getElementById('disp-nombre').innerText = window.prodActual.nombre;
+                document.getElementById('entrega-form').classList.remove('hidden');
+                scanner.clear();
+            }
         });
+    };
+
+    function initSignature() {
+        signaturePad = new SignaturePad(document.getElementById('canvas-firma'));
     }
 
-    function initFirma() {
-        window.pad = new SignaturePad(document.getElementById('canvas'));
-    }
-
-    window.firmar = function() {
-        if(window.pad.isEmpty()) return alert("Falta firma");
-        alert("Entrega registrada correctamente");
+    window.confirmarSalida = async function() {
+        if(signaturePad.isEmpty()) return alert("Firma obligatoria");
+        const entrega = {
+            equipo: window.prodActual.nombre,
+            cantidad: document.getElementById('out-cant').value,
+            proyecto: document.getElementById('out-proy').value,
+            firma: signaturePad.toDataURL(),
+            fecha: new Date().toLocaleString()
+        };
+        await addDoc(collection(db, "entregas"), entrega);
+        alert("Entrega exitosa.");
         location.reload();
-    }
+    };
 </script>
 </body>
 </html>
-
