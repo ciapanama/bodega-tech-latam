@@ -128,8 +128,8 @@
         document.getElementById('view-login').classList.add('hidden');
         document.getElementById('navbar').classList.remove('hidden');
 
-        if(user.includes('admin')) {
-            document.getElementById('view-admin').classList.remove('hidden');
+        if(user === 'panamacia@gmail.com') { 
+    document.getElementById('view-admin').classList.remove('hidden');
         } else {
             document.getElementById('view-operario').classList.remove('hidden');
             initSignature();
@@ -221,3 +221,4 @@
 </script>
 </body>
 </html>
+
